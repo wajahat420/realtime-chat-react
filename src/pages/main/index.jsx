@@ -1,5 +1,4 @@
 import Contacts from "../../components/contacts"
-import Head from "../../components/head"
 import Body from "../../components/body"
 
 const Main = () => {
@@ -11,7 +10,6 @@ const Main = () => {
                         <Contacts/>
                     </div>
                     <div className="main_right">
-                        <Head/>
                         <Body/>
                     </div>
                 </div>

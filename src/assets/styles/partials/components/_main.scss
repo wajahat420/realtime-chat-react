@@ -7,6 +7,12 @@
     {
         width: 350px;
         padding: 20px;
+        flex-shrink: 0;
+    }
+
+    &_right
+    {
+        flex: auto;
     }
 }
 
