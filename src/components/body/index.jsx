@@ -2,14 +2,26 @@ import { useState, useEffect, useRef } from 'react'
 import ImgBlock from '../../assets/images/block.PNG'
 import ImgFile from '../../assets/images/file.PNG'
 import ImgSend from '../../assets/images/send.PNG'
+import axios from "axios"
+import socketIOClient from "socket.io-client";
 
+const REACT_APP_API_URL = "http://localhost:5000"
+
+const socket = socketIOClient(REACT_APP_API_URL);
+
+let abc = "11"
+let dupUser = {}
 const Body = ({activeChat, realTimeMsg}) => {
 
     const [fileName, setFileName] = useState('')
     const [textMessage, setTextMessage] = useState('')
+    abc = textMessage
     let messageBox = useRef()
 
+    let loggedUserdID = "999"
+
     const [user, setUser] = useState({})
+    dupUser = user
 
     const [message, setMessage] = useState(
         [
@@ -31,7 +43,46 @@ const Body = ({activeChat, realTimeMsg}) => {
     }
 
     const sendMsg = () => {
+        console.log("SENDING");
 
+        axios.post(`${REACT_APP_API_URL}/sendMessage`, {
+            // type: "text",
+            // message : textMessage,
+            senderID : "123",
+            receiverID : "999"
+        })
+        .then(res => console.log("RESS", res))
+        .catch(err => console.log("ERR", err))
+    }
+
+    const checkReceiverActiveChat = (data) =>{
+        // console.log("receiverActiveChat", data);
+        console.log("USERR", dupUser);
+
+        
+        if(loggedUserdID === data.receiverID){
+            axios.post(`${REACT_APP_API_URL}/sendMessageChecking`, {
+                    checked : data.senderID === dupUser.id,
+                    senderID: data.senderID,
+                    receiverID : data.receiverID
+            })
+            .then(res => console.log("sendMessageChecking", res))
+            .catch(err => console.log("ERR", err))
+            // sendCurrentChatID()
+        }
+    }
+
+    const setToDB = (checked) => {
+
+        axios.post(`${REACT_APP_API_URL}/sendMessageToDB`, {
+            type: "text",
+            message : abc,
+            senderID : "999",
+            receiverID : "123",
+            checked : checked
+        })
+        .then(res => console.log("RES", res))
+        .catch(err => console.log("ERR", err))
     }
 
     useEffect(() => {
@@ -41,12 +92,19 @@ const Body = ({activeChat, realTimeMsg}) => {
             target.scroll({ top: target.scrollHeight, behavior: 'smooth' });
           });
         }
+
+
+        socket.on("receiverActiveChat", (data) => {
+            checkReceiverActiveChat(data)
+        })
+
+        socket.on('receiverActiveChatResponse', (data) => {
+            setToDB(data.checked)
+        })
       }, [])
 
     useEffect(() => {
-
         setUser(activeChat)
-        // messageBox.current.scrollIntoView({ behavior: "smooth" })
     }, [activeChat])  
     
     useEffect(() => {
@@ -58,7 +116,7 @@ const Body = ({activeChat, realTimeMsg}) => {
         }
     }, [realTimeMsg.message])   
 
-    console.log("realTimeMsg",user);
+    // console.log("realTimeMsg",textMessage);
 
 
     return(
