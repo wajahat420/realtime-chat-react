@@ -14,6 +14,7 @@ let dupUser = {}
 const Body = ({activeChat, realTimeMsg}) => {
 
     const [fileName, setFileName] = useState('')
+    const [lastSeen, setLastSeen] = useState('')
     const [textMessage, setTextMessage] = useState('')
     abc = textMessage
     let messageBox = useRef()
@@ -72,18 +73,12 @@ const Body = ({activeChat, realTimeMsg}) => {
 
     }
 
-    // const setToDB = (data) => {
+    const getLastSeen = () => {
+        // axios.post('')
+        setLastSeen('offline')
 
-    //     axios.post(`${REACT_APP_API_URL}/sendMessageToDB`, {
-    //         type: "text",
-    //         message : abc,
-    //         senderID : data.senderID,
-    //         receiverID : data.receiverID,
-    //         checked : data.checked
-    //     })
-    //     .then(res => console.log("RES", res))
-    //     .catch(err => console.log("ERR", err))
-    // }
+    }
+
 
     useEffect(() => {
         if (messageBox) {
@@ -95,16 +90,39 @@ const Body = ({activeChat, realTimeMsg}) => {
       }, [])
 
     useEffect(() => {
+        axios.post(`${REACT_APP_API_URL}/getUserStatus`, {
+            id : activeChat.id
+        })
+        .then(res => {
+            if(res.data.type === 'offline') getLastSeen()
+            else setLastSeen('online')
+            console.log("TTT", res.data.type)
+        })
+        .catch(err => console.log("ERR", err))
+
         loadData()
         setUser(activeChat)
         setMessage([])
+
+        const socket = socketIOClient(REACT_APP_API_URL);
+
+        socket.on("userStatusChange", (data) => {
+            console.log("userStatusChange", data);
+            if(user.id === data?.userId){
+                setLastSeen('offline')
+            }
+            // if(loggedUserdID === data.receiverID){
+            //     console.log("SHOWMSG==", data);
+            // }
+            // setRealTimeMsg(data)
+        })
+
     }, [activeChat])  
     
     useEffect(() => {
         // console.log("Realtime msg in body", realTimeMsg);
         // console.log("user in body", user);
         if(realTimeMsg.senderID == user.id || realTimeMsg.senderID === loggedUserdID){
-            console.log("IF");
             setMessage([
                 // ...message,
                 ...message,
@@ -113,7 +131,7 @@ const Body = ({activeChat, realTimeMsg}) => {
         }
     }, [realTimeMsg])   
 
-    // console.log("realTimeMsg",textMessage);
+    console.log("realTimeMsg",lastSeen);
 
 
     return(
@@ -125,7 +143,7 @@ const Body = ({activeChat, realTimeMsg}) => {
                     </div>
                     <div className="body_topRight">
                         <p className="body_topName">{user.name}</p>
-                        <p className="body_topMsg">{activeChat.status}</p>
+                        <p className="body_topMsg">{lastSeen}</p>
                     </div>
                 </div>
                 <div className="body_block">
