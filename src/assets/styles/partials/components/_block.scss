@@ -1,0 +1,49 @@
+.block
+{
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    background: rgba(0,0,0,0.2);
+
+    &_inner
+    {
+        text-align: center;
+        width: 350px;
+        height: 200px;
+        border-radius: 5px;
+        background: white;
+        box-shadow: 0 0 20px 0px rgba(255,255,255,0.3);
+    }
+
+    &_title
+    {
+        margin: 40px 0 30px;
+        font-size: 20px;
+        color: #706AEE;
+        line-height: 25px;
+    }
+
+    button
+    {
+        background: #706AEE;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 14px;
+        width: 90px;
+        height: 35px;
+        margin: 0 8px;
+        font-weight: 500;
+    }
+
+    button:hover
+    {
+        background: #4f4c98;
+    }
+}
