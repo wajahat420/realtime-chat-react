@@ -41,20 +41,6 @@ const Main = () => {
 
         // socket.emit("addUser", ())
 
-        socket.on("getUsers", (data) => {
-            console.log(
-                "USERS GET",
-                data
-            );
-            // const find = data.findIndex(elem => elem.userId == activeChat.id)
-            // console.log("find", find, data);
-            // console.log("activeChat", activeChat);
-            // if(find === -1){
-            //     setActiveChat({...activeChat, status : "offline"})
-            // }else{
-            //     setActiveChat({...activeChat, status : "online"})
-            // }
-        });
 
         socket.on("showMessage", (data) => {
 

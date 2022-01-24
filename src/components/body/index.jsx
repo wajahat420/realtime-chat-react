@@ -15,6 +15,7 @@ let dupUser = {}
 const Body = ({activeChat, realTimeMsg}) => {
 
     const [fileName, setFileName] = useState('')
+    const [lastSeen, setLastSeen] = useState('')
     const [textMessage, setTextMessage] = useState('')
     const [block, setBlock] = useState(false)
     abc = textMessage
@@ -23,7 +24,6 @@ const Body = ({activeChat, realTimeMsg}) => {
     let loggedUserdID = localStorage.getItem("id")
 
     const [user, setUser] = useState({})
-
 
     dupUser = user
 
@@ -73,18 +73,12 @@ const Body = ({activeChat, realTimeMsg}) => {
 
     }
 
-    // const setToDB = (data) => {
+    const getLastSeen = () => {
+        // axios.post('')
+        setLastSeen('offline')
 
-    //     axios.post(`${REACT_APP_API_URL}/sendMessageToDB`, {
-    //         type: "text",
-    //         message : abc,
-    //         senderID : data.senderID,
-    //         receiverID : data.receiverID,
-    //         checked : data.checked
-    //     })
-    //     .then(res => console.log("RES", res))
-    //     .catch(err => console.log("ERR", err))
-    // }
+    }
+
 
     useEffect(() => {
         if (messageBox) {
@@ -96,16 +90,39 @@ const Body = ({activeChat, realTimeMsg}) => {
       }, [])
 
     useEffect(() => {
+        axios.post(`${REACT_APP_API_URL}/getUserStatus`, {
+            id : activeChat.id
+        })
+        .then(res => {
+            if(res.data.type === 'offline') getLastSeen()
+            else setLastSeen('online')
+            console.log("TTT", res.data.type)
+        })
+        .catch(err => console.log("ERR", err))
+
         loadData()
         setUser(activeChat)
         setMessage([])
+
+        const socket = socketIOClient(REACT_APP_API_URL);
+
+        socket.on("userStatusChange", (data) => {
+            console.log("userStatusChange", data);
+            if(user.id === data?.userId){
+                setLastSeen('offline')
+            }
+            // if(loggedUserdID === data.receiverID){
+            //     console.log("SHOWMSG==", data);
+            // }
+            // setRealTimeMsg(data)
+        })
+
     }, [activeChat])  
     
     useEffect(() => {
         // console.log("Realtime msg in body", realTimeMsg);
         // console.log("user in body", user);
         if(realTimeMsg.senderID == user.id || realTimeMsg.senderID === loggedUserdID){
-            console.log("IF");
             setMessage([
                 // ...message,
                 ...message,
@@ -113,6 +130,46 @@ const Body = ({activeChat, realTimeMsg}) => {
             ])
         }
     }, [realTimeMsg])   
+
+    console.log("realTimeMsg",lastSeen);
+
+
+    // return(
+    //     <div ref={messageBox} className="body">
+    //         <div className="body_top">
+    //             <div className="body_topPerson">
+    //                 <div className="body_topLeft">
+    //                     <img src={user.image} alt="" />
+    //                 </div>
+    //                 <div className="body_topRight">
+    //                     <p className="body_topName">{user.name}</p>
+    //                     <p className="body_topMsg">{lastSeen}</p>
+    //                 </div>
+    //             </div>
+    //             <div className="body_block">
+    //                 {
+    //                     block
+    //                     ?
+    //                     <img src={ImgBlock} alt="" />
+    //                     :
+    //                     <img style={{width:25,height:25,marginRight:10}} src={"https://w7.pngwing.com/pngs/741/68/png-transparent-user-computer-icons-user-miscellaneous-cdr-rectangle-thumbnail.png"} alt="" />
+    //                 }
+    //             </div>
+    //         </div>
+    //         <div className="body_main">
+    //             {
+    //                 message.map((elem,index) => (
+    //                     elem.senderID === loggedUserdID
+    //                     ?
+    //                     <div className="body_sender">
+    //                         {/* <div className="body_senderLeft">
+    //                             <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MXx8cGVyc29ufGVufDB8fDB8fA%3D%3D&w=1000&q=80" alt="" />
+    //                         </div> */}
+    //                         <div className="body_senderRight">
+    //                             <p className="body_senderMsg">{elem.message}</p>
+    //                             <p className="body_senderTime">2 weeks ago</p>
+    //                         </div>
+    // }, [realTimeMsg.message])
 
     const handleBlock = () => {
         console.log('user is blocked');
@@ -160,11 +217,12 @@ const Body = ({activeChat, realTimeMsg}) => {
                 <div className="body_top">
                     <div className="body_topPerson">
                         <div className="body_topLeft">
-                            <img src='https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MXx8cGVyc29ufGVufDB8fDB8fA%3D%3D&w=1000&q=80' alt="" />
+                            {/* <img src='https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MXx8cGVyc29ufGVufDB8fDB8fA%3D%3D&w=1000&q=80' alt="" /> */}
+                            <img src={user.image} alt="" />
                         </div>
                         <div className="body_topRight">
-                            <p className="body_topName">Yogi Yogi Yogi Yogi Yogi Yogi</p>
-                            <p className="body_topMsg">{activeChat.status}</p>
+                            <p className="body_topName">{user.name}</p>
+                            <p className="body_topMsg">{lastSeen}</p>
                         </div>
                     </div>
                     

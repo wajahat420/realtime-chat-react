@@ -85,6 +85,8 @@ const Contacts = ({setChat, realTimeMsg}) => {
         loadChats()
     }, [])
 
+    
+
     // console.log("Chats",chats);
 
     return(
