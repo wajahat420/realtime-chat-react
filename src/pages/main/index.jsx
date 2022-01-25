@@ -24,7 +24,10 @@ const Main = () => {
 
     useEffect(()=>{
         const socket = socketIOClient(REACT_APP_API_URL);
-        socket.emit("addUser", loggedUserdID)
+
+        if(loggedUserdID){
+            socket.emit("addUser", loggedUserdID)
+        }
 
         // socket.on("message", (data) =>   setRealTimeMsg(data));
 
@@ -43,10 +46,6 @@ const Main = () => {
             checkReceiverActiveChat(data)
         })
         
-        return () => {
-            alert("unmount")
-        }
-        
     }, [])
 
     const sendCurrentChatID = () => {
@@ -58,16 +57,15 @@ const Main = () => {
     }
 
     const changeVal = async(e) => {
-        // alert("a")
         await localStorage.setItem('id', e.target.value)
     }
+    
     const get = localStorage.getItem('id')
-    // console.log("GET", get);
 
     return(
         <div className="container">
-            <h2>{get}</h2>
-            <input  type='text' onBlur={changeVal} onChange={e => val =  e.target.value}/>
+            {/* <h2>{get}</h2>
+            <input  type='text' onBlur={changeVal} onChange={e => val =  e.target.value}/> */}
             <div className="main">
                 <div className="box">
                     <div className="main_left">

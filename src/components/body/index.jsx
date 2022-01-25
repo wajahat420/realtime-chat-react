@@ -28,7 +28,11 @@ const Body = ({ activeChat, realTimeMsg }) => {
     abc = textMessage
     let messageBox = useRef()
 
-    let loggedUserdID = localStorage.getItem("id")
+
+    let loggedUserEmail = localStorage.getItem("email")
+    const userName = loggedUserEmail.split('@')[0]
+    // let loggedUserdID = localStorage.getItem("id")
+    let loggedUserdID = userName
 
     const [user, setUser] = useState({})
 
@@ -47,18 +51,15 @@ const Body = ({ activeChat, realTimeMsg }) => {
 
     const handleFile = (e) => {
         const file = e.target.files[0]
-        console.log("FILEEE", file);
         if (file.name) {
             const fileReader = new FileReader()
 
             fileReader.onloadend = (res) => {
                 console.log(res.target.result);
-                // getImgURL(file, file)
                 setImage(file)
             }
 
             fileReader.readAsDataURL(file)
-            // setFileName(file)
         }
     }
 
@@ -99,7 +100,7 @@ const Body = ({ activeChat, realTimeMsg }) => {
             receiverID: user.id,
             time: (new Date).getTime()
         })
-            .then(res => console.log("RESS", res))
+            .then(res => setTextMessage(''))
             .catch(err => console.log("ERR", err))
 
     }
@@ -110,7 +111,6 @@ const Body = ({ activeChat, realTimeMsg }) => {
             senderID: loggedUserdID
         })
             .then(res => {
-                console.log("LOAD DATA", res.data);
                 isSetBlock(res.data.block)
                 setMessage(res.data.findChat?.messages || [])
             })
@@ -125,17 +125,11 @@ const Body = ({ activeChat, realTimeMsg }) => {
         })
             .then(res => {
                 if (activeChat.id === data.userId) {
-                    // console.log("");
                     getLastSeen()
                 }
-                // console.log("DATA",data.userId, activeChat.id);
-                // console.log("SAVED", res.data)
-                // if(res.data.type === 'offline') getLastSeen()
-                // else setLastSeen('online')
-                // console.log("TTT", res.data.type)
+                
             })
             .catch(err => console.log("ERR", err))
-        // setLastSeen('offline')
     }
 
     const getLastSeen = () => {
@@ -154,7 +148,7 @@ const Body = ({ activeChat, realTimeMsg }) => {
 
         let currentTime = new Date()
         let givenTime = new Date(parseInt(time))
-        // console.log("givennnn",givenTime.getDate(),givenTime.getHours(),givenTime.getMinutes())
+        
         if (currentTime.getFullYear() > givenTime.getFullYear()) {
             return `${months[givenTime.getMonth()]}-${givenTime.getDate()}`
         }
@@ -215,11 +209,9 @@ const Body = ({ activeChat, realTimeMsg }) => {
     }, [activeChat])
 
     useEffect(() => {
-        // console.log("Realtime msg in body", realTimeMsg);
-        // console.log("user in body", user);
+
         if (realTimeMsg.senderID == user.id || realTimeMsg.senderID === loggedUserdID) {
             setMessage([
-                // ...message,
                 ...message,
                 realTimeMsg
             ])

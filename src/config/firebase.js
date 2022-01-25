@@ -1,19 +1,6 @@
 import firebase from 'firebase/compat/app';
 import {getStorage} from  "firebase/storage"
-// import storage from '@react-native-firebase/storage';
-// import database from "@react-native-firebase/database"
-// import '@firebase/auth';
-// import '@firebase/firestore';
 
-// var firebaseConfig = {
-//           apiKey: "AIzaSyDtifQbLdReFHhJIxNvObOtpHtlpujdhK8",
-//           authDomain: "my-project-1-5f5ff.firebaseapp.com",
-//           databaseURL: "https://my-project-1-5f5ff.firebaseio.com",
-//           projectId: "my-project-1-5f5ff",
-//           storageBucket: "my-project-1-5f5ff.appspot.com",
-//           messagingSenderId: "59396975914",
-//           appId: "1:59396975914:web:3f00ee9505db28fb81c253"
-// };
 
 const firebaseConfig = {
   apiKey: "AIzaSyDtifQbLdReFHhJIxNvObOtpHtlpujdhK8",
@@ -26,7 +13,8 @@ const firebaseConfig = {
 };
         
 const app = firebase.initializeApp(firebaseConfig);
-        // Initialize Firebase
+
+
 var storage = getStorage(app)
 
 export default storage
