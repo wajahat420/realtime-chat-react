@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { useState, useEffect } from 'react'
+import logoutIcon from '../../assets/images/log-out.png'
 import moment from 'moment'
 
 const REACT_APP_API_URL = "http://localhost:5000"
@@ -133,12 +134,23 @@ const Contacts = ({setChat, realTimeMsg}) => {
         loadChats()
     }, [])
 
-    
+    const handleLogout = () => {
+        localStorage.clear()
+        window.location.reload(false)
+    }    
 
     console.log("Chats",filteredContacts);
 
     return(
         <div className="contacts">
+            <div className="contacts_top">
+                <p className="contacts_topLeft">hello@world.com</p>
+                <div className="contacts_topRight" onClick={handleLogout}>
+                    <p>LOG OUT</p>
+                    <img src={logoutIcon} alt="..." />
+                </div>
+                {/* <p className="contacts_right">LOG OUT</p> */}
+            </div>
             <p className="contacts_title">Messages</p>
             <input className="contacts_input" type="search" placeholder="Search" onChange={(e) => setSearch(e.target.value)} />
             <div className="contacts_persons">

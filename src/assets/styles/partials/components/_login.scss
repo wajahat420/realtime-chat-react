@@ -1,0 +1,51 @@
+.login
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+
+    &_inner
+    {
+        width: 350px;
+        box-shadow: 0 0 16px rgb(0 0 0 / 20%);
+        padding: 30px;
+        border-radius: 10px;
+    }
+
+    label
+    {
+        font-weight: 500;
+    }
+
+    input
+    {
+        width: 100%;
+        border-radius: 5px;
+        border: 1px solid gray;
+        padding: 7px 10px;
+        outline: none;
+        color: gray;
+        margin: 5px 0 20px;
+    }
+
+    button
+    {
+        width: 100%;
+        border: 2px solid transparent;
+        height: 40px;
+        border-radius: 7px;
+        font-weight: 600;
+        background: #706AEE;
+        color: white;
+        margin-top: 10px;
+    }
+
+    button:hover
+    {
+        color: #706AEE;
+        border: 2px solid #706AEE;
+        background: white;
+    }
+
+}
