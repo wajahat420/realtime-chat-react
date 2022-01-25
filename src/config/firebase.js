@@ -1,5 +1,5 @@
-import firebase from 'firebase';
-import "firebase/storage"
+import firebase from 'firebase/compat/app';
+import {getStorage} from  "firebase/storage"
 // import storage from '@react-native-firebase/storage';
 // import database from "@react-native-firebase/database"
 // import '@firebase/auth';
@@ -25,8 +25,8 @@ const firebaseConfig = {
   appId: "1:59396975914:web:b997603550bd7d1f81c253"
 };
         
-firebase.initializeApp(firebaseConfig);
+const app = firebase.initializeApp(firebaseConfig);
         // Initialize Firebase
-var storage = firebase.storage();
+var storage = getStorage(app)
 
 export default storage

@@ -7,6 +7,7 @@ import axios from "axios"
 import socketIOClient from "socket.io-client";
 import moment from 'moment'
 import storage from '../../config/firebase'
+import { ref, uploadBytesResumable ,getDownloadURL} from "firebase/storage"
 
 const REACT_APP_API_URL = "http://localhost:5000"
 
@@ -52,7 +53,8 @@ const Body = ({ activeChat, realTimeMsg }) => {
 
             fileReader.onloadend = (res) => {
                 console.log(res.target.result);
-                getImgURL(file, file)
+                // getImgURL(file, file)
+                setImage(file)
             }
 
             fileReader.readAsDataURL(file)
@@ -60,63 +62,39 @@ const Body = ({ activeChat, realTimeMsg }) => {
         }
     }
 
-    const getImgURL = (result, file) => {
-        console.log("UPLOADING");
-        const uploadTask = storage().ref(`realtimeChat/${file.name}`)
-                            .put(result)
-                            .on("state_changed" , alert("success") , alert("abc"))
+
+    const setImage = (file) => {
+        const storageRef = ref(storage, `images/${Math.random().toString()}`)
+
+        const uploadTask = uploadBytesResumable(storageRef, file)
 
         uploadTask.on('state_changed',
-            (snapshot) => {
-                // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                console.log('Upload is ' + progress + '% done');
-                // switch (snapshot.state) {
-                //     case 'paused':
-                //         console.log('Upload is paused');
-                //         break;
-                //     case 'running':
-                //         console.log('Upload is running');
-                //         break;
-                // }
-            },
-            (error) => {
-                // A full list of error codes is available at
-                // https://firebase.google.com/docs/storage/web/handle-errors
-                // switch (error.code) {
-                //     case 'storage/unauthorized':
-                //         // User doesn't have permission to access the object
-                //         break;
-                //     case 'storage/canceled':
-                //         // User canceled the upload
-                //         break;
-
-                //     // ...
-
-                //     case 'storage/unknown':
-                //         // Unknown error occurred, inspect error.serverResponse
-                //         break;
-                // }
-            },
-            () => {
-                // Upload completed successfully, now we can get the download URL
-                uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-                    console.log('File available at', downloadURL);
-                    //  const dup = [...song]
-                    //  dup[index].song = downloadURL
-                    //  setSong(dup)
-                });
-            }
-        )
-
+        (snapshot) => {
+            // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log('Upload is ' + progress + '% done');
+         
+        },
+        (error) => {
+      
+        },
+        () => {
+            // Upload completed successfully, now we can get the download URL
+            getDownloadURL(uploadTask.snapshot.ref)
+            .then((downloadURL) => {
+                console.log('File available at', downloadURL);
+                sendMsg("image", downloadURL)
+              
+            });
+        }
+    )
     }
 
-
-    const sendMsg = () => {
+    const sendMsg = (type = "text", message = textMessage) => {
 
         axios.post(`${REACT_APP_API_URL}/sendMessage`, {
-            type: "text",
-            message: textMessage,
+            type: type,
+            message: message,
             senderID: loggedUserdID,
             receiverID: user.id,
             time: (new Date).getTime()
@@ -161,17 +139,12 @@ const Body = ({ activeChat, realTimeMsg }) => {
     }
 
     const getLastSeen = () => {
-        console.log("SEENK", activeChat.id);
         axios.post(`${REACT_APP_API_URL}/getLastSeen`, {
             id: activeChat.id,
         })
             .then(res => {
-                console.log("SEENAA", res.data)
                 const date = moment(parseInt(res.data.lastSeen)).format('hh:mm A')
                 setLastSeen(date)
-                // if(res.data.type === 'offline') getLastSeen()
-                // else setLastSeen('online')
-                // console.log("TTT", res.data.type)
             })
             .catch(err => console.log("ERR", err))
     }
@@ -189,7 +162,7 @@ const Body = ({ activeChat, realTimeMsg }) => {
             return `${months[givenTime.getMonth()]}-${givenTime.getDate()}`
         }
         else if (currentTime.getDate() > givenTime.getDate()) {
-            return `${givenTime.getDate()}-${months[givenTime.getMonth()]}-${givenTime.getFullYear()}`
+            return `${givenTime.getDate()}-${months[givenTime.getMonth()]}`
         } else if (currentTime.getHours() > givenTime.getHours()) {
             return `${currentTime.getHours() - givenTime.getHours()} hour ago`
         } else if (currentTime.getMinutes() - givenTime.getMinutes() !== 0) {
@@ -208,6 +181,20 @@ const Body = ({ activeChat, realTimeMsg }) => {
                 target.scroll({ top: target.scrollHeight, behavior: 'smooth' });
             });
         }
+
+        const socket = socketIOClient(REACT_APP_API_URL);
+
+        socket.on("userStatusChange", (data) => {
+            console.log("userStatusChange",user.id, data.user);
+            if (user.id === data?.userId) {
+                if(data.type == 'disconnect'){
+                    savingLastSeen(data.user)
+                }else{
+                    setLastSeen('online')
+                }
+            }
+
+        })
     }, [])
 
     useEffect(() => {
@@ -224,17 +211,6 @@ const Body = ({ activeChat, realTimeMsg }) => {
         loadData()
         setUser(activeChat)
         setMessage([])
-
-        const socket = socketIOClient(REACT_APP_API_URL);
-
-        socket.on("userStatusChange", (data) => {
-            console.log("userStatusChange", data);
-            if (user.id === data?.userId) {
-                // setLastSeen('offline')
-                savingLastSeen(data)
-            }
-
-        })
 
     }, [activeChat])
 
@@ -303,11 +279,14 @@ const Body = ({ activeChat, realTimeMsg }) => {
                             elem.senderID === loggedUserdID
                                 ?
                                 <div className="body_sender">
-                                    {/* <div className="body_senderLeft">
-                                    <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MXx8cGVyc29ufGVufDB8fDB8fA%3D%3D&w=1000&q=80" alt="" />
-                                </div> */}
                                     <div className="body_senderRight">
-                                        <p className="body_senderMsg">{elem.message}</p>
+                                        {
+                                            elem.type == 'text'
+                                            ?
+                                            <p className="body_senderMsg">{elem.message}</p>
+                                            :
+                                            <img style={{width:200, height:'100%'}} src={elem.message}/>
+                                        }
                                         <p className="body_senderTime">{getTime(elem.time)}</p>
                                     </div>
                                 </div>
@@ -317,8 +296,13 @@ const Body = ({ activeChat, realTimeMsg }) => {
                                         <img src={user?.image} alt="" />
                                     </div>
                                     <div className="body_receiverRight">
-                                        <p className="body_receiverName">Yogi</p>
-                                        <p className="body_receiverMsg">{elem.message}</p>
+                                        {
+                                            elem.type == 'text'
+                                            ?
+                                            <p className="body_receiverMsg">{elem.message}</p>
+                                            :
+                                            <img style={{width:200, height:'100%'}} src={elem.message}/>
+                                        }
                                         <p className="body_receiverTime">{getTime(elem.time)}</p>
                                     </div>
                                 </div>
@@ -330,7 +314,7 @@ const Body = ({ activeChat, realTimeMsg }) => {
                     <input className='body_msg' value={textMessage} onChange={(e) => setTextMessage(e.target.value)} type="text" placeholder='Your Message' />
                     <input type="file" id='file' onChange={(e) => handleFile(e)} />
                     <label htmlFor="file"><img className='body_file' src={ImgFile} alt="" /></label>
-                    <img className='body_send' onClick={sendMsg} src={ImgSend} alt="" />
+                    <img className='body_send' onClick={() => sendMsg('text', textMessage)} src={ImgSend} alt="" />
                 </div>
             </div>
         </React.Fragment>

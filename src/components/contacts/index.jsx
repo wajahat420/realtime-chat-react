@@ -79,14 +79,22 @@ const Contacts = ({setChat, realTimeMsg}) => {
     
     }
 
-    const seenMsg = (elem) => {
+    const seenMsg = (elem, index) => {
         if(!elem.seen){
             axios.post(`${REACT_APP_API_URL}/seenMsg`, {
                 receiverID : elem.id,
                 senderID : loggedUserdID
             })
-            .then(res => loadChats())
+            .then(res => {
+                const dupChats = [...chats]
+                dupChats[index].seen = true
+
+                setChats(dupChats)
+                setUser(elem)
+            })
             .catch(err => console.log("Err", err))
+        }else{
+            setUser(elem)
         }
     }
 
@@ -98,14 +106,20 @@ const Contacts = ({setChat, realTimeMsg}) => {
             const dupChats = [...chats]
             const find = dupChats.findIndex(elem => elem.id === realTimeMsg.senderID || elem.id === realTimeMsg.receiverID)
             
-            console.log("CHCHCHCHHHC",realTimeMsg.time, realTimeMsg);
+            console.log("realTimeMsg", realTimeMsg);
+            console.log("user", user);
             if(find !== -1){
                 const chat = chats[find]
                 dupChats.splice(find, 1)
 
                 chat.lastMsg = realTimeMsg.message
                 chat.time = realTimeMsg.time
-                chat.seen = false
+
+                if(realTimeMsg.senderID == loggedUserdID || realTimeMsg.senderID == user.id){
+                    chat.seen = true
+                }else{
+                    chat.seen = false
+                }
                 setChats([
                     chat,
                     ...dupChats,
@@ -129,13 +143,12 @@ const Contacts = ({setChat, realTimeMsg}) => {
             <input className="contacts_input" type="search" placeholder="Search" onChange={(e) => setSearch(e.target.value)} />
             <div className="contacts_persons">
                 {filteredContacts.length > 0 ? 
-                    filteredContacts.map(elem => {
+                    filteredContacts.map((elem, index) => {
                         return(
                             <div style={!elem.seen ? {backgroundColor:'#dbdbdb'} : {}} 
                                 onClick={() => {
                                     setChat(elem) 
-                                    setUser(elem)
-                                    seenMsg(elem)
+                                    seenMsg(elem,index)
                                 }} 
                                 className="contacts_person">
                                 <div className="contacts_left">
