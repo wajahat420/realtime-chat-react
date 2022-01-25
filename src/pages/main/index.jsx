@@ -19,18 +19,7 @@ const Main = () => {
     // const [activeChat, setActiveChat] = useState({})
 
     const checkReceiverActiveChat = (data) =>{
-        
-        // if(loggedUserdID === data.receiverID){
-            // console.log("IS RECEIVER", data);
             setRealTimeMsg(data)
-            // axios.post(`${REACT_APP_API_URL}/sendMessageChecking`, {
-            //         checked : data.senderID === dupUser.id,
-            //         senderID: data.senderID,
-            //         receiverID : data.receiverID
-            // })
-            // .then(res => console.log("sendMessageChecking", res))
-            // .catch(err => console.log("ERR", err))
-        // }
     }
 
     useEffect(()=>{
