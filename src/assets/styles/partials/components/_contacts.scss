@@ -29,6 +29,42 @@
         overflow: auto;
     }
 
+    &_top
+    {
+        color: gray;
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px solid #ededed;
+        padding-bottom: 15px;
+        margin-bottom: 10px;
+    }
+
+    &_topLeft
+    {
+        white-space: nowrap;
+        width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    &_topRight
+    {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+
+        p
+        {
+            font-weight: 600;
+            margin-right: 5px;
+        }
+
+        img
+        {
+            width: 20px;
+        }
+    }
+
     &_person
     {
         display: flex;
