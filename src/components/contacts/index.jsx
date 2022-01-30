@@ -2,7 +2,9 @@ import axios from 'axios'
 import { useState, useEffect } from 'react'
 import logoutIcon from '../../assets/images/log-out.png'
 
-const REACT_APP_API_URL = "http://localhost:5000"
+// const REACT_APP_API_URL = "http://localhost:5000"
+const REACT_APP_API_URL = "https://realtimebackend.herokuapp.com"
+
 
 
 const Contacts = ({setChat, realTimeMsg}) => {
@@ -60,7 +62,7 @@ const Contacts = ({setChat, realTimeMsg}) => {
           return `${months[givenTime.getMonth()]}-${givenTime.getDate()}`
         }
         else if(currentTime.getDate() > givenTime.getDate()){
-          return `${givenTime.getDate()}-${months[givenTime.getMonth()]}-${givenTime.getFullYear()}`
+          return `${givenTime.getDate()}-${months[givenTime.getMonth()]}`
         }else if(currentTime.getHours() > givenTime.getHours()){
           return `${currentTime.getHours() -  givenTime.getHours()} hour ago`
         }else if(currentTime.getMinutes() - givenTime.getMinutes() !== 0){

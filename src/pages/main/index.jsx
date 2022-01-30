@@ -5,13 +5,19 @@ import Contacts from "../../components/contacts"
 import Body from "../../components/body"
 import axios from 'axios';
 
-const REACT_APP_API_URL = "http://localhost:5000"
+// const REACT_APP_API_URL = "http://localhost:5000"
+const REACT_APP_API_URL = "https://realtimebackend.herokuapp.com"
+
 
  let val = ''
 
 const Main = () => {
 
-    let loggedUserdID = localStorage.getItem("id")
+
+    let loggedUserEmail = localStorage.getItem("email")
+    const userName = loggedUserEmail.split('@')[0]
+    // let loggedUserdID = localStorage.getItem("id")
+    let loggedUserdID = userName
 
     const [activeChat, setActiveChat] = useState({})
     const [realTimeMsg, setRealTimeMsg] = useState({})
@@ -24,26 +30,20 @@ const Main = () => {
 
     useEffect(()=>{
         const socket = socketIOClient(REACT_APP_API_URL);
-
+        console.log("LOGGG", loggedUserdID);
         if(loggedUserdID){
+            // console.log("");
             socket.emit("addUser", loggedUserdID)
         }
 
-        // socket.on("message", (data) =>   setRealTimeMsg(data));
-
-        // socket.emit("addUser", ())
-
-
-        socket.on("showMessage", (data) => {
-
-            if(loggedUserdID === data.receiverID){
-                console.log("SHOWMSG==", data);
-            }
-            // setRealTimeMsg(data)
-        })
-
         socket.on("receiverActiveChat", (data) => {
             checkReceiverActiveChat(data)
+        })
+
+        socket.on(loggedUserdID, (data) => {
+            // const { receiverId } = this.props.route.params
+      
+            console.log("data to socket",loggedUserdID, data);
         })
         
     }, [])

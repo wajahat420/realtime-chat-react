@@ -9,7 +9,9 @@ import moment from 'moment'
 import storage from '../../config/firebase'
 import { ref, uploadBytesResumable ,getDownloadURL} from "firebase/storage"
 
-const REACT_APP_API_URL = "http://localhost:5000"
+// const REACT_APP_API_URL = "http://localhost:5000"
+const REACT_APP_API_URL = "https://realtimebackend.herokuapp.com"
+
 
 const socket = socketIOClient(REACT_APP_API_URL);
 
@@ -119,12 +121,14 @@ const Body = ({ activeChat, realTimeMsg }) => {
     }
 
     const savingLastSeen = (data) => {
+        console.log("SAVING LAST SEEN", data);
         axios.post(`${REACT_APP_API_URL}/lastSeen`, {
             id: data.userId,
-            date: (new Date()).getTime()
+            date: (new Date()).getTime()    
         })
             .then(res => {
-                if (activeChat.id === data.userId) {
+                console.log("saving last seen api response", data);
+                if (dupUser.id === data.userId) {
                     getLastSeen()
                 }
                 
@@ -133,6 +137,7 @@ const Body = ({ activeChat, realTimeMsg }) => {
     }
 
     const getLastSeen = () => {
+        console.log("GET LAST SEEN", activeChat.id);
         axios.post(`${REACT_APP_API_URL}/getLastSeen`, {
             id: activeChat.id,
         })
@@ -179,12 +184,21 @@ const Body = ({ activeChat, realTimeMsg }) => {
         const socket = socketIOClient(REACT_APP_API_URL);
 
         socket.on("userStatusChange", (data) => {
-            console.log("userStatusChange",user.id, data.user);
-            if (user.id === data?.userId) {
-                if(data.type == 'disconnect'){
+            const user = dupUser
+            console.log("userStatusChange", data);
+            console.log("current user", dupUser);
+            if(data.type == 'disconnect'){
+                if (user.id === data.user.userId && data.user) {
+                    console.log("SAVING LAST SEEN");
                     savingLastSeen(data.user)
-                }else{
+                }
+            }else{
+                if (user.id === data.user) {
+                    console.log("ONLINE USER");
+
                     setLastSeen('online')
+                }else{
+                    getLastSeen()
                 }
             }
 
@@ -201,7 +215,8 @@ const Body = ({ activeChat, realTimeMsg }) => {
                 console.log("TTT", res.data.type)
             })
             .catch(err => console.log("ERR", err))
-
+        
+        console.log("ACTIVE CHAT", activeChat);
         loadData()
         setUser(activeChat)
         setMessage([])
