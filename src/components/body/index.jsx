@@ -17,6 +17,8 @@ const socket = socketIOClient(REACT_APP_API_URL);
 
 let abc = "11"
 let dupUser = {}
+let msgSentTime = ''
+
 const Body = ({ activeChat, realTimeMsg }) => {
 
     // const { storage } = Firebase()
@@ -93,17 +95,26 @@ const Body = ({ activeChat, realTimeMsg }) => {
     )
     }
 
-    const sendMsg = (type = "text", message = textMessage) => {
+    const sendMsg = (type = "text", text = textMessage) => {
+        const time = (new Date).getTime()
 
-        axios.post(`${REACT_APP_API_URL}/sendMessage`, {
-            type: type,
-            message: message,
-            senderID: loggedUserdID,
-            receiverID: user.id,
-            time: (new Date).getTime()
+        const obj = {
+            type,
+            message : text,
+            senderID : loggedUserdID,
+            receiverID : user.id,
+            time
+        }
+
+        axios.post(`${REACT_APP_API_URL}/sendMessage`, obj)
+        .then(res => {
+            console.log("RES", res.data);
+            setTextMessage('')
+            if(res.data.userStatus.type == 'offline'){
+                setMessage([...message, obj])
+            }
         })
-            .then(res => setTextMessage(''))
-            .catch(err => console.log("ERR", err))
+        .catch(err => console.log("ERR", err))
 
     }
 
@@ -113,8 +124,21 @@ const Body = ({ activeChat, realTimeMsg }) => {
             senderID: loggedUserdID
         })
             .then(res => {
+
+                const messages = []
+
+                res.data.findChat?.messages.forEach(elem => {
+                  const obj = {...elem}
+                  if(res.data.findChat.seen){
+                    obj.seen = true
+                  }else{
+                    obj.seen = false
+                  }
+                  messages.push(obj)
+                })
+
                 isSetBlock(res.data.block)
-                setMessage(res.data.findChat?.messages || [])
+                setMessage(messages)
             })
             .catch(err => console.log("err", err))
 
@@ -129,7 +153,9 @@ const Body = ({ activeChat, realTimeMsg }) => {
             .then(res => {
                 console.log("saving last seen api response", data);
                 if (dupUser.id === data.userId) {
-                    getLastSeen()
+                    const date = moment(parseInt((new Date).getTime())).format('hh:mm A')
+                    setLastSeen(date)
+                    // getLastSeen()
                 }
                 
             })
@@ -137,7 +163,7 @@ const Body = ({ activeChat, realTimeMsg }) => {
     }
 
     const getLastSeen = () => {
-        console.log("GET LAST SEEN", activeChat.id);
+        console.log("GET LAST SEEN", dupUser.id);
         axios.post(`${REACT_APP_API_URL}/getLastSeen`, {
             id: activeChat.id,
         })
@@ -198,23 +224,49 @@ const Body = ({ activeChat, realTimeMsg }) => {
 
                     setLastSeen('online')
                 }else{
+                    // const date = moment((new Date).getTime()).format('hh:mm A')
+                    // console.log("DOING", date);
+                    // setLastSeen(date)
                     getLastSeen()
                 }
             }
-
         })
+
+        socket.on(loggedUserdID, (data) => {
+            console.log("BODY", data);
+            console.log('current user', dupUser.id);
+            if(data.isSeenReceiver == ''){
+
+                console.log("isSeenReceiver", data.senderID == dupUser.id);
+                
+                axios.post( `${REACT_APP_API_URL}/hasReadMsg`, {
+                    ...data,
+                    isSeen : data.senderID == dupUser.id
+                })
+                .then(res => console.log('res sent',res))
+            }else if(data.isSeenSender == '') {
+                if(data.isSeen){
+                    const messages = [...message, {...data, seen : data.isSeen}]
+                    // messages[messages.length-1].seen = true
+                    setMessage(messages)
+                  }
+          
+                console.log("isSeenSender", data);
+            }
+        })
+
     }, [])
 
     useEffect(() => {
         axios.post(`${REACT_APP_API_URL}/getUserStatus`, {
             id: activeChat.id
         })
-            .then(res => {
-                if (res.data.type === 'offline') getLastSeen()
-                else setLastSeen('online')
-                console.log("TTT", res.data.type)
-            })
-            .catch(err => console.log("ERR", err))
+        .then(res => {
+            if (res.data.type === 'offline') getLastSeen()
+            else setLastSeen('online')
+            console.log("TTT", res.data.type)
+        })
+        .catch(err => console.log("ERR", err))
         
         console.log("ACTIVE CHAT", activeChat);
         loadData()
@@ -224,8 +276,9 @@ const Body = ({ activeChat, realTimeMsg }) => {
     }, [activeChat])
 
     useEffect(() => {
-
-        if (realTimeMsg.senderID == user.id || realTimeMsg.senderID === loggedUserdID) {
+        console.log("INSIDE REALTIME MSG");
+        // if (realTimeMsg.senderID == user.id || realTimeMsg.senderID === loggedUserdID) {
+        if (realTimeMsg.receiverID == loggedUserdID) {
             setMessage([
                 ...message,
                 realTimeMsg
@@ -249,7 +302,7 @@ const Body = ({ activeChat, realTimeMsg }) => {
         console.log('user is blocked');
     }
 
-
+    console.log("USERR", message[message.length-1]);
     return (
 
         <React.Fragment>
@@ -287,6 +340,7 @@ const Body = ({ activeChat, realTimeMsg }) => {
                                 ?
                                 <div className="body_sender">
                                     <div className="body_senderRight">
+                                        <div style={{position:'relative'}}>
                                         {
                                             elem.type == 'text'
                                             ?
@@ -294,6 +348,8 @@ const Body = ({ activeChat, realTimeMsg }) => {
                                             :
                                             <img style={{width:200, height:'100%'}} src={elem.message}/>
                                         }
+                                            <i style={{color:(elem.seen) ? 'green' : 'gray', position:'absolute', bottom:'-2px', right:'-20px', fontSize:'15px'}} class="fas fa-check-double read"></i>
+                                        </div>
                                         <p className="body_senderTime">{getTime(elem.time)}</p>
                                     </div>
                                 </div>
@@ -306,7 +362,9 @@ const Body = ({ activeChat, realTimeMsg }) => {
                                         {
                                             elem.type == 'text'
                                             ?
-                                            <p className="body_receiverMsg">{elem.message}</p>
+                                           
+                                                <p className="body_receiverMsg">{elem.message}</p>
+                                           
                                             :
                                             <img style={{width:200, height:'100%'}} src={elem.message}/>
                                         }
