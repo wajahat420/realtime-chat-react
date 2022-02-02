@@ -10,6 +10,10 @@ p
     margin-bottom: 0;
 }
 
+.bell:hover {
+    cursor: pointer;
+}
+
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;

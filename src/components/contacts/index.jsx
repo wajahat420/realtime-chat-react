@@ -31,7 +31,7 @@ const Contacts = ({setChat, realTimeMsg}) => {
 
             res.data.forEach(elem => {
 
-                console.log("ELEM", elem);
+                // console.log("ELEM", elem);
                 let obj = {
                     name : elem.user.name,
                     id : elem.user.id,  
@@ -99,8 +99,8 @@ const Contacts = ({setChat, realTimeMsg}) => {
             const dupChats = [...chats]
             const find = dupChats.findIndex(elem => elem.id === realTimeMsg.senderID || elem.id === realTimeMsg.receiverID)
             
-            console.log("realTimeMsg", realTimeMsg);
-            console.log("user", user);
+            // console.log("realTimeMsg", realTimeMsg);
+            // console.log("user", user);
             if(find !== -1){
                 const chat = chats[find]
                 dupChats.splice(find, 1)
@@ -131,7 +131,7 @@ const Contacts = ({setChat, realTimeMsg}) => {
         window.location.reload(false)
     }    
 
-    console.log("Chats",filteredContacts);
+    // console.log("Chats",filteredContacts);
 
     return(
         <div className="contacts">

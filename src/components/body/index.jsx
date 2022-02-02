@@ -19,7 +19,7 @@ let abc = "11"
 let dupUser = {}
 let msgSentTime = ''
 
-const Body = ({ activeChat, realTimeMsg }) => {
+const Body = ({ activeChat, realTimeMsg, sendMsgContact, setNoti }) => {
 
     // const { storage } = Firebase()
 
@@ -27,7 +27,7 @@ const Body = ({ activeChat, realTimeMsg }) => {
     const [lastSeen, setLastSeen] = useState('')
     const [textMessage, setTextMessage] = useState('')
     const [block, setBlock] = useState(false)
-    const [isBlock, isSetBlock] = useState(false)
+    const [isBlock, isSetBlock] = useState({block : false,byMe : ''})
 
     abc = textMessage
     let messageBox = useRef()
@@ -108,10 +108,11 @@ const Body = ({ activeChat, realTimeMsg }) => {
 
         axios.post(`${REACT_APP_API_URL}/sendMessage`, obj)
         .then(res => {
-            console.log("RES", res.data);
+            // console.log("RES", res.data);
             setTextMessage('')
             if(res.data.userStatus.type == 'offline'){
-                setMessage([...message, obj])
+                sendMsgContact(obj)
+                // setMessage([...message, obj])
             }
         })
         .catch(err => console.log("ERR", err))
@@ -137,7 +138,10 @@ const Body = ({ activeChat, realTimeMsg }) => {
                   messages.push(obj)
                 })
 
-                isSetBlock(res.data.block)
+                isSetBlock({
+                    block : res.data.block,
+                    byMe : res.data.byMe
+                })
                 setMessage(messages)
             })
             .catch(err => console.log("err", err))
@@ -145,16 +149,16 @@ const Body = ({ activeChat, realTimeMsg }) => {
     }
 
     const savingLastSeen = (data) => {
-        console.log("SAVING LAST SEEN", data);
+        // console.log("SAVING LAST SEEN", data);
         axios.post(`${REACT_APP_API_URL}/lastSeen`, {
             id: data.userId,
             date: (new Date()).getTime()    
         })
             .then(res => {
-                console.log("saving last seen api response", data);
+                // console.log("saving last seen api response", data);
                 if (dupUser.id === data.userId) {
                     const date = moment(parseInt((new Date).getTime())).format('hh:mm A')
-                    setLastSeen(date)
+                    setLastSeen(getTime((new Date()).getTime()))
                     // getLastSeen()
                 }
                 
@@ -163,13 +167,16 @@ const Body = ({ activeChat, realTimeMsg }) => {
     }
 
     const getLastSeen = () => {
-        console.log("GET LAST SEEN", dupUser.id);
+        // console.log("GET LAST SEEN", dupUser.id);
         axios.post(`${REACT_APP_API_URL}/getLastSeen`, {
             id: activeChat.id,
         })
             .then(res => {
-                const date = moment(parseInt(res.data.lastSeen)).format('hh:mm A')
-                setLastSeen(date)
+                // const date = moment(parseInt(res.data.lastSeen)).format('hh:mm A')
+                // const seen = getSeen(res.data.lastSeen)
+                if(res.data.lastSeen){
+                    setLastSeen(getTime(res.data.lastSeen))
+                }
             })
             .catch(err => console.log("ERR", err))
     }
@@ -187,7 +194,8 @@ const Body = ({ activeChat, realTimeMsg }) => {
             return `${months[givenTime.getMonth()]}-${givenTime.getDate()}`
         }
         else if (currentTime.getDate() > givenTime.getDate()) {
-            return `${givenTime.getDate()}-${months[givenTime.getMonth()]}`
+            // return `${givenTime.getDate()}-${months[givenTime.getMonth()]}`
+            return `${currentTime.getDate() - givenTime.getDate()} day ago`
         } else if (currentTime.getHours() > givenTime.getHours()) {
             return `${currentTime.getHours() - givenTime.getHours()} hour ago`
         } else if (currentTime.getMinutes() - givenTime.getMinutes() !== 0) {
@@ -198,7 +206,27 @@ const Body = ({ activeChat, realTimeMsg }) => {
 
     }
 
+    const getSeen = (time) => {
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
+        let currentTime = new Date()
+        let givenTime = new Date(parseInt(time))
+        
+        if (currentTime.getFullYear() > givenTime.getFullYear()) {
+            return `${months[givenTime.getMonth()]}-${givenTime.getDate()}`
+        }
+        if (currentTime.getMonth() > givenTime.getMonth()) {
+            return `${months[givenTime.getMonth()]}-${givenTime.getDate()}`
+        }
+        else if (currentTime.getDate() > givenTime.getDate()) {
+            return `${givenTime.getDate()}-${months[givenTime.getMonth()]}`
+        } 
+        
+        else {
+            return `${givenTime.getHours()} - ${givenTime.getMinutes()}`
+        }
+
+    }
     useEffect(() => {
         if (messageBox) {
             messageBox.current.addEventListener('DOMNodeInserted', event => {
@@ -211,11 +239,11 @@ const Body = ({ activeChat, realTimeMsg }) => {
 
         socket.on("userStatusChange", (data) => {
             const user = dupUser
-            console.log("userStatusChange", data);
-            console.log("current user", dupUser);
+            // console.log("userStatusChange", data);
+            // console.log("current user", dupUser);
             if(data.type == 'disconnect'){
                 if (user.id === data.user.userId && data.user) {
-                    console.log("SAVING LAST SEEN");
+                    // console.log("SAVING LAST SEEN");
                     savingLastSeen(data.user)
                 }
             }else{
@@ -224,36 +252,38 @@ const Body = ({ activeChat, realTimeMsg }) => {
 
                     setLastSeen('online')
                 }else{
-                    // const date = moment((new Date).getTime()).format('hh:mm A')
+                    const date = moment((new Date).getTime()).format('hh:mm A')
                     // console.log("DOING", date);
                     // setLastSeen(date)
-                    getLastSeen()
+                    setLastSeen(getTime(data.time))
+                    // getLastSeen()
                 }
             }
         })
 
-        socket.on(loggedUserdID, (data) => {
-            console.log("BODY", data);
-            console.log('current user', dupUser.id);
-            if(data.isSeenReceiver == ''){
+        // socket.on(loggedUserdID, (data) => {
+        //     console.log("BODY", data);
+        //     console.log('current user', dupUser.id);
 
-                console.log("isSeenReceiver", data.senderID == dupUser.id);
+        //     if(data.isSeenReceiver == ''){
+
+        //         console.log("isSeenReceiver", data.senderID == dupUser.id);
                 
-                axios.post( `${REACT_APP_API_URL}/hasReadMsg`, {
-                    ...data,
-                    isSeen : data.senderID == dupUser.id
-                })
-                .then(res => console.log('res sent',res))
-            }else if(data.isSeenSender == '') {
-                if(data.isSeen){
-                    const messages = [...message, {...data, seen : data.isSeen}]
-                    // messages[messages.length-1].seen = true
-                    setMessage(messages)
-                  }
+        //         axios.post( `${REACT_APP_API_URL}/hasReadMsg`, {
+        //             ...data,
+        //             isSeen : data.senderID == dupUser.id
+        //         })
+        //         .then(res => console.log('res sent',res))
+        //     }else if(data.isSeenSender == '') {
+        //         if(data.isSeen){
+        //             const messages = [...message, {...data, seen : data.isSeen}]
+        //             // messages[messages.length-1].seen = true
+        //             setMessage(messages)
+        //           }
           
-                console.log("isSeenSender", data);
-            }
-        })
+        //         console.log("isSeenSender", data);
+        //     }
+        // })
 
     }, [])
 
@@ -264,11 +294,11 @@ const Body = ({ activeChat, realTimeMsg }) => {
         .then(res => {
             if (res.data.type === 'offline') getLastSeen()
             else setLastSeen('online')
-            console.log("TTT", res.data.type)
+            // console.log("TTT", res.data.type)
         })
         .catch(err => console.log("ERR", err))
         
-        console.log("ACTIVE CHAT", activeChat);
+        // console.log("ACTIVE CHAT", activeChat);
         loadData()
         setUser(activeChat)
         setMessage([])
@@ -276,14 +306,17 @@ const Body = ({ activeChat, realTimeMsg }) => {
     }, [activeChat])
 
     useEffect(() => {
-        console.log("INSIDE REALTIME MSG");
+        console.log("INSIDE REALTIME MSG", realTimeMsg);
         // if (realTimeMsg.senderID == user.id || realTimeMsg.senderID === loggedUserdID) {
-        if (realTimeMsg.receiverID == loggedUserdID) {
+        // if (realTimeMsg.receiverID == loggedUserdID) {
             setMessage([
                 ...message,
-                realTimeMsg
+                {
+                    ...realTimeMsg,
+                    seen : realTimeMsg.isSeen
+                }
             ])
-        }
+        // }
     }, [realTimeMsg])
 
 
@@ -292,24 +325,26 @@ const Body = ({ activeChat, realTimeMsg }) => {
         axios.post(`${REACT_APP_API_URL}/blockUser`, {
             receiverID: user.id,
             senderID: loggedUserdID,
-            block: isBlock
+            block: isBlock.block
         })
             .then(res => {
-                isSetBlock(!isBlock)
+                isSetBlock({ block:!isBlock.block, byMe :isBlock.block ? '' : 'yes' })
                 setBlock(false)
             })
             .catch(err => console.log(err))
-        console.log('user is blocked');
     }
 
-    console.log("USERR", message[message.length-1]);
     return (
 
         <React.Fragment>
-            {block && <Block status={isBlock} setBlock={setBlock} handleBlock={handleBlock} />}
+            {block && <Block status={isBlock.block} setBlock={setBlock} handleBlock={handleBlock} />}
+
             <div ref={messageBox} className="body">
+
+
                 <div className="body_top">
                     <div className="body_topPerson">
+
                         <div className="body_topLeft">
                             {/* <img src='https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MXx8cGVyc29ufGVufDB8fDB8fA%3D%3D&w=1000&q=80' alt="" /> */}
                             <img src={user.image} alt="" />
@@ -320,16 +355,18 @@ const Body = ({ activeChat, realTimeMsg }) => {
                         </div>
                     </div>
 
-                    {/* <div className="body_block">
-                        <img src={ImgBlock} alt="" onClick={() => setBlock(true)} />
-                    </div> */}
+                    
                     <div className="body_block">
                         {
-                            isBlock
-                                ?
-                                <img onClick={setBlock} src={ImgBlock} alt="" />
-                                :
-                                <img onClick={setBlock} style={{ width: 25, height: 25, marginRight: 10 }} src={"https://w7.pngwing.com/pngs/741/68/png-transparent-user-computer-icons-user-miscellaneous-cdr-rectangle-thumbnail.png"} alt="" />
+                            isBlock.byMe == 'yes'
+                            ?
+                            <img onClick={setBlock} src={ImgBlock} alt="" />
+                            :
+                            isBlock.byMe == ''
+                            ?
+                            <img onClick={setBlock} style={{ width: 25, height: 25, marginRight: 10 }} src={"https://w7.pngwing.com/pngs/741/68/png-transparent-user-computer-icons-user-miscellaneous-cdr-rectangle-thumbnail.png"} alt="" />
+                            :
+                            <></>
                         }
                     </div>
                 </div>
@@ -374,13 +411,20 @@ const Body = ({ activeChat, realTimeMsg }) => {
                         ))
                     }
                 </div>
-                <div className="body_bot">
+                {
+                !isBlock.block &&
+                <form onSubmit={(e) => {
+                    e.preventDefault()
+                    sendMsg('text', textMessage)
+                }} className="body_bot">
                     <p className="body_fileName">{fileName}</p>
                     <input className='body_msg' value={textMessage} onChange={(e) => setTextMessage(e.target.value)} type="text" placeholder='Your Message' />
+
                     <input type="file" id='file' onChange={(e) => handleFile(e)} />
                     <label htmlFor="file"><img className='body_file' src={ImgFile} alt="" /></label>
                     <img className='body_send' onClick={() => sendMsg('text', textMessage)} src={ImgSend} alt="" />
-                </div>
+                </form>
+                }
             </div>
         </React.Fragment>
     )
